@@ -1,0 +1,1613 @@
+<script type="text/x-red" data-template-name="slack-webclient-config">
+   <div class="form-row">
+       <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+       <input type="text" id="node-config-input-name">
+   </div>
+   <div class="form-row">
+       <label for="node-config-input-token"><i class="fa fa-key"></i> OAuth Token</label>
+       <input type="password" id="node-config-input-token">
+   </div>
+
+</script>
+
+<script type="text/x-red" data-template-name="slack-webclient">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-gcpCredentials"><i class="fa fa-cog"></i> Config</label>
+        <input type="text" id="node-input-webClientConfig">
+    </div>
+    <div class="form-row">
+        <label for="node-input-methodName"><i class="fa fa-slack"></i> Method</label>
+        <input type="text" id="node-input-methodName">
+    </div>
+    <div class="form-row">
+        <div style="margin-left: 100px;"><span id="help"></span> <a id="link" href="" target="api.slack.com">Learn more</a>.</div>
+    </div>
+
+</script>
+
+<script type="text/x-red" data-help-name="slack-webclient"></script>
+
+<script type="text/x-red" data-template-name="slack-channel-lookup">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-gcpCredentials"><i class="fa fa-cog"></i> Config</label>
+        <input type="text" id="node-input-webClientConfig">
+    </div>
+    <div class="form-row">
+        <label for="node-input-channel"><i class="fa fa-slack"></i> Channel</label>
+        <input type="text" id="node-input-channel">
+        <input type="hidden" id="node-input-channelType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-output"><i class="fa fa-long-arrow-right"></i> Output</label>
+        <input type="text" id="node-input-output">
+        <input type="hidden" id="node-input-outputType">
+    </div>
+
+</script>
+
+<script type="text/x-red" data-help-name="slack-channel-lookup"></script>
+
+<script type="text/x-red" data-template-name="slack-escape-text">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-text"><i class="fa fa-slack"></i> Text</label>
+        <input type="text" id="node-input-text">
+        <input type="hidden" id="node-input-textType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-output"><i class="fa fa-long-arrow-right"></i> Output</label>
+        <input type="text" id="node-input-output">
+        <input type="hidden" id="node-input-outputType">
+    </div>
+
+</script>
+
+<script type="text/x-red" data-help-name="slack-escape-text"></script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('slack-webclient-config', {
+        category: 'config',
+        defaults: {
+            name: {
+                value: ''
+            }
+        },
+        credentials: {
+            token: {
+                type: 'text'
+            }
+        },
+        paletteLabel: 'slack webclient config',
+        label: function () {
+            return this.name || 'slack webclient config';
+        }
+    });
+
+    const slackMethods = {
+        "admin.analytics.getFile": {
+            "label": "admin.analytics.getFile",
+            "value": "admin.analytics.getFile",
+            "help": "Retrieve analytics data for a given date, presented as a compressed JSON file",
+            "link": "https://api.slack.com/methods/admin.analytics.getFile"
+        },
+        "admin.apps.approve": {
+            "label": "admin.apps.approve",
+            "value": "admin.apps.approve",
+            "help": "Approve an app for installation on a workspace.",
+            "link": "https://api.slack.com/methods/admin.apps.approve"
+        },
+        "admin.apps.approved.list": {
+            "label": "admin.apps.approved.list",
+            "value": "admin.apps.approved.list",
+            "help": "List approved apps for an org or workspace.",
+            "link": "https://api.slack.com/methods/admin.apps.approved.list"
+        },
+        "admin.apps.clearResolution": {
+            "label": "admin.apps.clearResolution",
+            "value": "admin.apps.clearResolution",
+            "help": "Clear an app resolution",
+            "link": "https://api.slack.com/methods/admin.apps.clearResolution"
+        },
+        "admin.apps.requests.cancel": {
+            "label": "admin.apps.requests.cancel",
+            "value": "admin.apps.requests.cancel",
+            "help": "Cancel approval request for team",
+            "link": "https://api.slack.com/methods/admin.apps.requests.cancel"
+        },
+        "admin.apps.requests.list": {
+            "label": "admin.apps.requests.list",
+            "value": "admin.apps.requests.list",
+            "help": "List app requests for a team/workspace.",
+            "link": "https://api.slack.com/methods/admin.apps.requests.list"
+        },
+        "admin.apps.restrict": {
+            "label": "admin.apps.restrict",
+            "value": "admin.apps.restrict",
+            "help": "Restrict an app for installation on a workspace.",
+            "link": "https://api.slack.com/methods/admin.apps.restrict"
+        },
+        "admin.apps.restricted.list": {
+            "label": "admin.apps.restricted.list",
+            "value": "admin.apps.restricted.list",
+            "help": "List restricted apps for an org or workspace.",
+            "link": "https://api.slack.com/methods/admin.apps.restricted.list"
+        },
+        "admin.apps.uninstall": {
+            "label": "admin.apps.uninstall",
+            "value": "admin.apps.uninstall",
+            "help": "Uninstall an app from one or many workspaces, or an entire enterprise organization.",
+            "link": "https://api.slack.com/methods/admin.apps.uninstall"
+        },
+        "admin.auth.policy.assignEntities": {
+            "label": "admin.auth.policy.assignEntities",
+            "value": "admin.auth.policy.assignEntities",
+            "help": "Assign entities to a particular authentication policy.",
+            "link": "https://api.slack.com/methods/admin.auth.policy.assignEntities"
+        },
+        "admin.auth.policy.getEntities": {
+            "label": "admin.auth.policy.getEntities",
+            "value": "admin.auth.policy.getEntities",
+            "help": "Fetch all the entities assigned to a particular authentication policy by name.",
+            "link": "https://api.slack.com/methods/admin.auth.policy.getEntities"
+        },
+        "admin.auth.policy.removeEntities": {
+            "label": "admin.auth.policy.removeEntities",
+            "value": "admin.auth.policy.removeEntities",
+            "help": "Remove specified entities from a specified authentication policy.",
+            "link": "https://api.slack.com/methods/admin.auth.policy.removeEntities"
+        },
+        "admin.barriers.create": {
+            "label": "admin.barriers.create",
+            "value": "admin.barriers.create",
+            "help": "Create an Information Barrier",
+            "link": "https://api.slack.com/methods/admin.barriers.create"
+        },
+        "admin.barriers.delete": {
+            "label": "admin.barriers.delete",
+            "value": "admin.barriers.delete",
+            "help": "Delete an existing Information Barrier",
+            "link": "https://api.slack.com/methods/admin.barriers.delete"
+        },
+        "admin.barriers.list": {
+            "label": "admin.barriers.list",
+            "value": "admin.barriers.list",
+            "help": "Get all Information Barriers for your organization",
+            "link": "https://api.slack.com/methods/admin.barriers.list"
+        },
+        "admin.barriers.update": {
+            "label": "admin.barriers.update",
+            "value": "admin.barriers.update",
+            "help": "Update an existing Information Barrier",
+            "link": "https://api.slack.com/methods/admin.barriers.update"
+        },
+        "admin.conversations.archive": {
+            "label": "admin.conversations.archive",
+            "value": "admin.conversations.archive",
+            "help": "Archive a public or private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.archive"
+        },
+        "admin.conversations.convertToPrivate": {
+            "label": "admin.conversations.convertToPrivate",
+            "value": "admin.conversations.convertToPrivate",
+            "help": "Convert a public channel to a private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.convertToPrivate"
+        },
+        "admin.conversations.create": {
+            "label": "admin.conversations.create",
+            "value": "admin.conversations.create",
+            "help": "Create a public or private channel-based conversation.",
+            "link": "https://api.slack.com/methods/admin.conversations.create"
+        },
+        "admin.conversations.delete": {
+            "label": "admin.conversations.delete",
+            "value": "admin.conversations.delete",
+            "help": "Delete a public or private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.delete"
+        },
+        "admin.conversations.disconnectShared": {
+            "label": "admin.conversations.disconnectShared",
+            "value": "admin.conversations.disconnectShared",
+            "help": "Disconnect a connected channel from one or more workspaces.",
+            "link": "https://api.slack.com/methods/admin.conversations.disconnectShared"
+        },
+        "admin.conversations.ekm.listOriginalConnectedChannelInfo": {
+            "label": "admin.conversations.ekm.listOriginalConnectedChannelInfo",
+            "value": "admin.conversations.ekm.listOriginalConnectedChannelInfo",
+            "help": "List all disconnected channels\u2014i.e., channels that were once connected to other workspaces and then disconnected\u2014and the corresponding original channel IDs for key revocation with EKM.",
+            "link": "https://api.slack.com/methods/admin.conversations.ekm.listOriginalConnectedChannelInfo"
+        },
+        "admin.conversations.getConversationPrefs": {
+            "label": "admin.conversations.getConversationPrefs",
+            "value": "admin.conversations.getConversationPrefs",
+            "help": "Get conversation preferences for a public or private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.getConversationPrefs"
+        },
+        "admin.conversations.getCustomRetention": {
+            "label": "admin.conversations.getCustomRetention",
+            "value": "admin.conversations.getCustomRetention",
+            "help": "This API endpoint can be used by any admin to get a channel's retention policy.",
+            "link": "https://api.slack.com/methods/admin.conversations.getCustomRetention"
+        },
+        "admin.conversations.getTeams": {
+            "label": "admin.conversations.getTeams",
+            "value": "admin.conversations.getTeams",
+            "help": "Get all the workspaces a given public or private channel is connected to within this Enterprise org.",
+            "link": "https://api.slack.com/methods/admin.conversations.getTeams"
+        },
+        "admin.conversations.invite": {
+            "label": "admin.conversations.invite",
+            "value": "admin.conversations.invite",
+            "help": "Invite a user to a public or private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.invite"
+        },
+        "admin.conversations.removeCustomRetention": {
+            "label": "admin.conversations.removeCustomRetention",
+            "value": "admin.conversations.removeCustomRetention",
+            "help": "This API endpoint can be used by any admin to remove a channel's retention policy.",
+            "link": "https://api.slack.com/methods/admin.conversations.removeCustomRetention"
+        },
+        "admin.conversations.rename": {
+            "label": "admin.conversations.rename",
+            "value": "admin.conversations.rename",
+            "help": "Rename a public or private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.rename"
+        },
+        "admin.conversations.restrictAccess.addGroup": {
+            "label": "admin.conversations.restrictAccess.addGroup",
+            "value": "admin.conversations.restrictAccess.addGroup",
+            "help": "Add an allowlist of IDP groups for accessing a channel",
+            "link": "https://api.slack.com/methods/admin.conversations.restrictAccess.addGroup"
+        },
+        "admin.conversations.restrictAccess.listGroups": {
+            "label": "admin.conversations.restrictAccess.listGroups",
+            "value": "admin.conversations.restrictAccess.listGroups",
+            "help": "List all IDP Groups linked to a channel",
+            "link": "https://api.slack.com/methods/admin.conversations.restrictAccess.listGroups"
+        },
+        "admin.conversations.restrictAccess.removeGroup": {
+            "label": "admin.conversations.restrictAccess.removeGroup",
+            "value": "admin.conversations.restrictAccess.removeGroup",
+            "help": "Remove a linked IDP group linked from a private channel",
+            "link": "https://api.slack.com/methods/admin.conversations.restrictAccess.removeGroup"
+        },
+        "admin.conversations.search": {
+            "label": "admin.conversations.search",
+            "value": "admin.conversations.search",
+            "help": "Search for public or private channels in an Enterprise organization.",
+            "link": "https://api.slack.com/methods/admin.conversations.search"
+        },
+        "admin.conversations.setConversationPrefs": {
+            "label": "admin.conversations.setConversationPrefs",
+            "value": "admin.conversations.setConversationPrefs",
+            "help": "Set the posting permissions for a public or private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.setConversationPrefs"
+        },
+        "admin.conversations.setCustomRetention": {
+            "label": "admin.conversations.setCustomRetention",
+            "value": "admin.conversations.setCustomRetention",
+            "help": "This API endpoint can be used by any admin to set a channel's retention policy.",
+            "link": "https://api.slack.com/methods/admin.conversations.setCustomRetention"
+        },
+        "admin.conversations.setTeams": {
+            "label": "admin.conversations.setTeams",
+            "value": "admin.conversations.setTeams",
+            "help": "Set the workspaces in an Enterprise grid org that connect to a public or private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.setTeams"
+        },
+        "admin.conversations.unarchive": {
+            "label": "admin.conversations.unarchive",
+            "value": "admin.conversations.unarchive",
+            "help": "Unarchive a public or private channel.",
+            "link": "https://api.slack.com/methods/admin.conversations.unarchive"
+        },
+        "admin.emoji.add": {
+            "label": "admin.emoji.add",
+            "value": "admin.emoji.add",
+            "help": "Add an emoji.",
+            "link": "https://api.slack.com/methods/admin.emoji.add"
+        },
+        "admin.emoji.addAlias": {
+            "label": "admin.emoji.addAlias",
+            "value": "admin.emoji.addAlias",
+            "help": "Add an emoji alias.",
+            "link": "https://api.slack.com/methods/admin.emoji.addAlias"
+        },
+        "admin.emoji.list": {
+            "label": "admin.emoji.list",
+            "value": "admin.emoji.list",
+            "help": "List emoji for an Enterprise Grid organization.",
+            "link": "https://api.slack.com/methods/admin.emoji.list"
+        },
+        "admin.emoji.remove": {
+            "label": "admin.emoji.remove",
+            "value": "admin.emoji.remove",
+            "help": "Remove an emoji across an Enterprise Grid organization",
+            "link": "https://api.slack.com/methods/admin.emoji.remove"
+        },
+        "admin.emoji.rename": {
+            "label": "admin.emoji.rename",
+            "value": "admin.emoji.rename",
+            "help": "Rename an emoji.",
+            "link": "https://api.slack.com/methods/admin.emoji.rename"
+        },
+        "admin.inviteRequests.approve": {
+            "label": "admin.inviteRequests.approve",
+            "value": "admin.inviteRequests.approve",
+            "help": "Approve a workspace invite request.",
+            "link": "https://api.slack.com/methods/admin.inviteRequests.approve"
+        },
+        "admin.inviteRequests.approved.list": {
+            "label": "admin.inviteRequests.approved.list",
+            "value": "admin.inviteRequests.approved.list",
+            "help": "List all approved workspace invite requests.",
+            "link": "https://api.slack.com/methods/admin.inviteRequests.approved.list"
+        },
+        "admin.inviteRequests.denied.list": {
+            "label": "admin.inviteRequests.denied.list",
+            "value": "admin.inviteRequests.denied.list",
+            "help": "List all denied workspace invite requests.",
+            "link": "https://api.slack.com/methods/admin.inviteRequests.denied.list"
+        },
+        "admin.inviteRequests.deny": {
+            "label": "admin.inviteRequests.deny",
+            "value": "admin.inviteRequests.deny",
+            "help": "Deny a workspace invite request.",
+            "link": "https://api.slack.com/methods/admin.inviteRequests.deny"
+        },
+        "admin.inviteRequests.list": {
+            "label": "admin.inviteRequests.list",
+            "value": "admin.inviteRequests.list",
+            "help": "List all pending workspace invite requests.",
+            "link": "https://api.slack.com/methods/admin.inviteRequests.list"
+        },
+        "admin.teams.admins.list": {
+            "label": "admin.teams.admins.list",
+            "value": "admin.teams.admins.list",
+            "help": "List all of the admins on a given workspace.",
+            "link": "https://api.slack.com/methods/admin.teams.admins.list"
+        },
+        "admin.teams.create": {
+            "label": "admin.teams.create",
+            "value": "admin.teams.create",
+            "help": "Create an Enterprise team.",
+            "link": "https://api.slack.com/methods/admin.teams.create"
+        },
+        "admin.teams.list": {
+            "label": "admin.teams.list",
+            "value": "admin.teams.list",
+            "help": "List all teams on an Enterprise organization",
+            "link": "https://api.slack.com/methods/admin.teams.list"
+        },
+        "admin.teams.owners.list": {
+            "label": "admin.teams.owners.list",
+            "value": "admin.teams.owners.list",
+            "help": "List all of the owners on a given workspace.",
+            "link": "https://api.slack.com/methods/admin.teams.owners.list"
+        },
+        "admin.teams.settings.info": {
+            "label": "admin.teams.settings.info",
+            "value": "admin.teams.settings.info",
+            "help": "Fetch information about settings in a workspace",
+            "link": "https://api.slack.com/methods/admin.teams.settings.info"
+        },
+        "admin.teams.settings.setDefaultChannels": {
+            "label": "admin.teams.settings.setDefaultChannels",
+            "value": "admin.teams.settings.setDefaultChannels",
+            "help": "Set the default channels of a workspace.",
+            "link": "https://api.slack.com/methods/admin.teams.settings.setDefaultChannels"
+        },
+        "admin.teams.settings.setDescription": {
+            "label": "admin.teams.settings.setDescription",
+            "value": "admin.teams.settings.setDescription",
+            "help": "Set the description of a given workspace.",
+            "link": "https://api.slack.com/methods/admin.teams.settings.setDescription"
+        },
+        "admin.teams.settings.setDiscoverability": {
+            "label": "admin.teams.settings.setDiscoverability",
+            "value": "admin.teams.settings.setDiscoverability",
+            "help": "An API method that allows admins to set the discoverability of a given workspace",
+            "link": "https://api.slack.com/methods/admin.teams.settings.setDiscoverability"
+        },
+        "admin.teams.settings.setIcon": {
+            "label": "admin.teams.settings.setIcon",
+            "value": "admin.teams.settings.setIcon",
+            "help": "Sets the icon of a workspace.",
+            "link": "https://api.slack.com/methods/admin.teams.settings.setIcon"
+        },
+        "admin.teams.settings.setName": {
+            "label": "admin.teams.settings.setName",
+            "value": "admin.teams.settings.setName",
+            "help": "Set the name of a given workspace.",
+            "link": "https://api.slack.com/methods/admin.teams.settings.setName"
+        },
+        "admin.usergroups.addChannels": {
+            "label": "admin.usergroups.addChannels",
+            "value": "admin.usergroups.addChannels",
+            "help": "Add up to one hundred default channels to an IDP group.",
+            "link": "https://api.slack.com/methods/admin.usergroups.addChannels"
+        },
+        "admin.usergroups.addTeams": {
+            "label": "admin.usergroups.addTeams",
+            "value": "admin.usergroups.addTeams",
+            "help": "Associate one or more default workspaces with an organization-wide IDP group.",
+            "link": "https://api.slack.com/methods/admin.usergroups.addTeams"
+        },
+        "admin.usergroups.listChannels": {
+            "label": "admin.usergroups.listChannels",
+            "value": "admin.usergroups.listChannels",
+            "help": "List the channels linked to an org-level IDP group (user group).",
+            "link": "https://api.slack.com/methods/admin.usergroups.listChannels"
+        },
+        "admin.usergroups.removeChannels": {
+            "label": "admin.usergroups.removeChannels",
+            "value": "admin.usergroups.removeChannels",
+            "help": "Remove one or more default channels from an org-level IDP group (user group).",
+            "link": "https://api.slack.com/methods/admin.usergroups.removeChannels"
+        },
+        "admin.users.assign": {
+            "label": "admin.users.assign",
+            "value": "admin.users.assign",
+            "help": "Add an Enterprise user to a workspace.",
+            "link": "https://api.slack.com/methods/admin.users.assign"
+        },
+        "admin.users.invite": {
+            "label": "admin.users.invite",
+            "value": "admin.users.invite",
+            "help": "Invite a user to a workspace.",
+            "link": "https://api.slack.com/methods/admin.users.invite"
+        },
+        "admin.users.list": {
+            "label": "admin.users.list",
+            "value": "admin.users.list",
+            "help": "List users on a workspace",
+            "link": "https://api.slack.com/methods/admin.users.list"
+        },
+        "admin.users.remove": {
+            "label": "admin.users.remove",
+            "value": "admin.users.remove",
+            "help": "Remove a user from a workspace.",
+            "link": "https://api.slack.com/methods/admin.users.remove"
+        },
+        "admin.users.session.clearSettings": {
+            "label": "admin.users.session.clearSettings",
+            "value": "admin.users.session.clearSettings",
+            "help": "Clear user-specific session settings\u2014the session duration and what happens when the client closes\u2014for a list of users.",
+            "link": "https://api.slack.com/methods/admin.users.session.clearSettings"
+        },
+        "admin.users.session.getSettings": {
+            "label": "admin.users.session.getSettings",
+            "value": "admin.users.session.getSettings",
+            "help": "Get user-specific session settings\u2014the session duration and what happens when the client closes\u2014given a list of users.",
+            "link": "https://api.slack.com/methods/admin.users.session.getSettings"
+        },
+        "admin.users.session.invalidate": {
+            "label": "admin.users.session.invalidate",
+            "value": "admin.users.session.invalidate",
+            "help": "Revoke a single session for a user. The user will be forced to login to Slack.",
+            "link": "https://api.slack.com/methods/admin.users.session.invalidate"
+        },
+        "admin.users.session.list": {
+            "label": "admin.users.session.list",
+            "value": "admin.users.session.list",
+            "help": "List active user sessions for an organization",
+            "link": "https://api.slack.com/methods/admin.users.session.list"
+        },
+        "admin.users.session.reset": {
+            "label": "admin.users.session.reset",
+            "value": "admin.users.session.reset",
+            "help": "Wipes all valid sessions on all devices for a given user",
+            "link": "https://api.slack.com/methods/admin.users.session.reset"
+        },
+        "admin.users.session.resetBulk": {
+            "label": "admin.users.session.resetBulk",
+            "value": "admin.users.session.resetBulk",
+            "help": "Enqueues an asynchronous job to wipe all valid sessions on all devices for a given list of users",
+            "link": "https://api.slack.com/methods/admin.users.session.resetBulk"
+        },
+        "admin.users.session.setSettings": {
+            "label": "admin.users.session.setSettings",
+            "value": "admin.users.session.setSettings",
+            "help": "Configure the user-level session settings\u2014the session duration and what happens when the client closes\u2014for one or more users.",
+            "link": "https://api.slack.com/methods/admin.users.session.setSettings"
+        },
+        "admin.users.setAdmin": {
+            "label": "admin.users.setAdmin",
+            "value": "admin.users.setAdmin",
+            "help": "Set an existing guest, regular user, or owner to be an admin user.",
+            "link": "https://api.slack.com/methods/admin.users.setAdmin"
+        },
+        "admin.users.setExpiration": {
+            "label": "admin.users.setExpiration",
+            "value": "admin.users.setExpiration",
+            "help": "Set an expiration for a guest user",
+            "link": "https://api.slack.com/methods/admin.users.setExpiration"
+        },
+        "admin.users.setOwner": {
+            "label": "admin.users.setOwner",
+            "value": "admin.users.setOwner",
+            "help": "Set an existing guest, regular user, or admin user to be a workspace owner.",
+            "link": "https://api.slack.com/methods/admin.users.setOwner"
+        },
+        "admin.users.setRegular": {
+            "label": "admin.users.setRegular",
+            "value": "admin.users.setRegular",
+            "help": "Set an existing guest user, admin user, or owner to be a regular user.",
+            "link": "https://api.slack.com/methods/admin.users.setRegular"
+        },
+        "admin.users.unsupportedVersions.export": {
+            "label": "admin.users.unsupportedVersions.export",
+            "value": "admin.users.unsupportedVersions.export",
+            "help": "Ask Slackbot to send you an export listing all workspace members using unsupported software, presented as a zipped CSV file.",
+            "link": "https://api.slack.com/methods/admin.users.unsupportedVersions.export"
+        },
+        "api.test": {
+            "label": "api.test",
+            "value": "api.test",
+            "help": "Checks API calling code.",
+            "link": "https://api.slack.com/methods/api.test"
+        },
+        "apps.connections.open": {
+            "label": "apps.connections.open",
+            "value": "apps.connections.open",
+            "help": "Generate a temporary Socket Mode WebSocket URL that your app can connect to in order to receive events and interactive payloads over,",
+            "link": "https://api.slack.com/methods/apps.connections.open"
+        },
+        "apps.event.authorizations.list": {
+            "label": "apps.event.authorizations.list",
+            "value": "apps.event.authorizations.list",
+            "help": "Get a list of authorizations for the given event context. Each authorization represents an app installation that the event is visible to.",
+            "link": "https://api.slack.com/methods/apps.event.authorizations.list"
+        },
+        "apps.manifest.create": {
+            "label": "apps.manifest.create",
+            "value": "apps.manifest.create",
+            "help": "Create an app from an app manifest.",
+            "link": "https://api.slack.com/methods/apps.manifest.create"
+        },
+        "apps.manifest.delete": {
+            "label": "apps.manifest.delete",
+            "value": "apps.manifest.delete",
+            "help": "Permanently deletes an app created through app manifests",
+            "link": "https://api.slack.com/methods/apps.manifest.delete"
+        },
+        "apps.manifest.export": {
+            "label": "apps.manifest.export",
+            "value": "apps.manifest.export",
+            "help": "Export an app manifest from an existing app",
+            "link": "https://api.slack.com/methods/apps.manifest.export"
+        },
+        "apps.manifest.update": {
+            "label": "apps.manifest.update",
+            "value": "apps.manifest.update",
+            "help": "Update an app from an app manifest",
+            "link": "https://api.slack.com/methods/apps.manifest.update"
+        },
+        "apps.manifest.validate": {
+            "label": "apps.manifest.validate",
+            "value": "apps.manifest.validate",
+            "help": "Validate an app manifest",
+            "link": "https://api.slack.com/methods/apps.manifest.validate"
+        },
+        "apps.uninstall": {
+            "label": "apps.uninstall",
+            "value": "apps.uninstall",
+            "help": "Uninstalls your app from a workspace.",
+            "link": "https://api.slack.com/methods/apps.uninstall"
+        },
+        "auth.revoke": {
+            "label": "auth.revoke",
+            "value": "auth.revoke",
+            "help": "Revokes a token.",
+            "link": "https://api.slack.com/methods/auth.revoke"
+        },
+        "auth.teams.list": {
+            "label": "auth.teams.list",
+            "value": "auth.teams.list",
+            "help": "List the workspaces a token can access.",
+            "link": "https://api.slack.com/methods/auth.teams.list"
+        },
+        "auth.test": {
+            "label": "auth.test",
+            "value": "auth.test",
+            "help": "Checks authentication & identity.",
+            "link": "https://api.slack.com/methods/auth.test"
+        },
+        "bookmarks.add": {
+            "label": "bookmarks.add",
+            "value": "bookmarks.add",
+            "help": "Add bookmark to a channel.",
+            "link": "https://api.slack.com/methods/bookmarks.add"
+        },
+        "bookmarks.edit": {
+            "label": "bookmarks.edit",
+            "value": "bookmarks.edit",
+            "help": "Edit bookmark.",
+            "link": "https://api.slack.com/methods/bookmarks.edit"
+        },
+        "bookmarks.list": {
+            "label": "bookmarks.list",
+            "value": "bookmarks.list",
+            "help": "List bookmark for the channel.",
+            "link": "https://api.slack.com/methods/bookmarks.list"
+        },
+        "bookmarks.remove": {
+            "label": "bookmarks.remove",
+            "value": "bookmarks.remove",
+            "help": "Remove bookmark from the channel.",
+            "link": "https://api.slack.com/methods/bookmarks.remove"
+        },
+        "bots.info": {
+            "label": "bots.info",
+            "value": "bots.info",
+            "help": "Gets information about a bot user.",
+            "link": "https://api.slack.com/methods/bots.info"
+        },
+        "calls.add": {
+            "label": "calls.add",
+            "value": "calls.add",
+            "help": "Registers a new Call.",
+            "link": "https://api.slack.com/methods/calls.add"
+        },
+        "calls.end": {
+            "label": "calls.end",
+            "value": "calls.end",
+            "help": "Ends a Call.",
+            "link": "https://api.slack.com/methods/calls.end"
+        },
+        "calls.info": {
+            "label": "calls.info",
+            "value": "calls.info",
+            "help": "Returns information about a Call.",
+            "link": "https://api.slack.com/methods/calls.info"
+        },
+        "calls.participants.add": {
+            "label": "calls.participants.add",
+            "value": "calls.participants.add",
+            "help": "Registers new participants added to a Call.",
+            "link": "https://api.slack.com/methods/calls.participants.add"
+        },
+        "calls.participants.remove": {
+            "label": "calls.participants.remove",
+            "value": "calls.participants.remove",
+            "help": "Registers participants removed from a Call.",
+            "link": "https://api.slack.com/methods/calls.participants.remove"
+        },
+        "calls.update": {
+            "label": "calls.update",
+            "value": "calls.update",
+            "help": "Updates information about a Call.",
+            "link": "https://api.slack.com/methods/calls.update"
+        },
+        "channels.create": {
+            "label": "channels.create",
+            "value": "channels.create",
+            "help": "[DEPRECATED] Creates a channel.",
+            "link": "https://api.slack.com/methods/channels.create"
+        },
+        "channels.info": {
+            "label": "channels.info",
+            "value": "channels.info",
+            "help": "[DEPRECATED] Gets information about a channel.",
+            "link": "https://api.slack.com/methods/channels.info"
+        },
+        "channels.invite": {
+            "label": "channels.invite",
+            "value": "channels.invite",
+            "help": "[DEPRECATED] Invites a user to a channel.",
+            "link": "https://api.slack.com/methods/channels.invite"
+        },
+        "channels.mark": {
+            "label": "channels.mark",
+            "value": "channels.mark",
+            "help": "[DEPRECATED] Sets the read cursor in a channel.",
+            "link": "https://api.slack.com/methods/channels.mark"
+        },
+        "chat.delete": {
+            "label": "chat.delete",
+            "value": "chat.delete",
+            "help": "Deletes a message.",
+            "link": "https://api.slack.com/methods/chat.delete"
+        },
+        "chat.deleteScheduledMessage": {
+            "label": "chat.deleteScheduledMessage",
+            "value": "chat.deleteScheduledMessage",
+            "help": "Deletes a pending scheduled message from the queue.",
+            "link": "https://api.slack.com/methods/chat.deleteScheduledMessage"
+        },
+        "chat.getPermalink": {
+            "label": "chat.getPermalink",
+            "value": "chat.getPermalink",
+            "help": "Retrieve a permalink URL for a specific extant message",
+            "link": "https://api.slack.com/methods/chat.getPermalink"
+        },
+        "chat.meMessage": {
+            "label": "chat.meMessage",
+            "value": "chat.meMessage",
+            "help": "Share a me message into a channel.",
+            "link": "https://api.slack.com/methods/chat.meMessage"
+        },
+        "chat.postEphemeral": {
+            "label": "chat.postEphemeral",
+            "value": "chat.postEphemeral",
+            "help": "Sends an ephemeral message to a user in a channel.",
+            "link": "https://api.slack.com/methods/chat.postEphemeral"
+        },
+        "chat.postMessage": {
+            "label": "chat.postMessage",
+            "value": "chat.postMessage",
+            "help": "Sends a message to a channel.",
+            "link": "https://api.slack.com/methods/chat.postMessage"
+        },
+        "chat.scheduleMessage": {
+            "label": "chat.scheduleMessage",
+            "value": "chat.scheduleMessage",
+            "help": "Schedules a message to be sent to a channel.",
+            "link": "https://api.slack.com/methods/chat.scheduleMessage"
+        },
+        "chat.scheduledMessages.list": {
+            "label": "chat.scheduledMessages.list",
+            "value": "chat.scheduledMessages.list",
+            "help": "Returns a list of scheduled messages.",
+            "link": "https://api.slack.com/methods/chat.scheduledMessages.list"
+        },
+        "chat.unfurl": {
+            "label": "chat.unfurl",
+            "value": "chat.unfurl",
+            "help": "Provide custom unfurl behavior for user-posted URLs",
+            "link": "https://api.slack.com/methods/chat.unfurl"
+        },
+        "chat.update": {
+            "label": "chat.update",
+            "value": "chat.update",
+            "help": "Updates a message.",
+            "link": "https://api.slack.com/methods/chat.update"
+        },
+        "conversations.acceptSharedInvite": {
+            "label": "conversations.acceptSharedInvite",
+            "value": "conversations.acceptSharedInvite",
+            "help": "Accepts an invitation to a Slack Connect channel.",
+            "link": "https://api.slack.com/methods/conversations.acceptSharedInvite"
+        },
+        "conversations.approveSharedInvite": {
+            "label": "conversations.approveSharedInvite",
+            "value": "conversations.approveSharedInvite",
+            "help": "Approves an invitation to a Slack Connect channel",
+            "link": "https://api.slack.com/methods/conversations.approveSharedInvite"
+        },
+        "conversations.archive": {
+            "label": "conversations.archive",
+            "value": "conversations.archive",
+            "help": "Archives a conversation.",
+            "link": "https://api.slack.com/methods/conversations.archive"
+        },
+        "conversations.close": {
+            "label": "conversations.close",
+            "value": "conversations.close",
+            "help": "Closes a direct message or multi-person direct message.",
+            "link": "https://api.slack.com/methods/conversations.close"
+        },
+        "conversations.create": {
+            "label": "conversations.create",
+            "value": "conversations.create",
+            "help": "Initiates a public or private channel-based conversation",
+            "link": "https://api.slack.com/methods/conversations.create"
+        },
+        "conversations.declineSharedInvite": {
+            "label": "conversations.declineSharedInvite",
+            "value": "conversations.declineSharedInvite",
+            "help": "Declines a Slack Connect channel invite.",
+            "link": "https://api.slack.com/methods/conversations.declineSharedInvite"
+        },
+        "conversations.history": {
+            "label": "conversations.history",
+            "value": "conversations.history",
+            "help": "Fetches a conversation's history of messages and events.",
+            "link": "https://api.slack.com/methods/conversations.history"
+        },
+        "conversations.info": {
+            "label": "conversations.info",
+            "value": "conversations.info",
+            "help": "Retrieve information about a conversation.",
+            "link": "https://api.slack.com/methods/conversations.info"
+        },
+        "conversations.invite": {
+            "label": "conversations.invite",
+            "value": "conversations.invite",
+            "help": "Invites users to a channel.",
+            "link": "https://api.slack.com/methods/conversations.invite"
+        },
+        "conversations.inviteShared": {
+            "label": "conversations.inviteShared",
+            "value": "conversations.inviteShared",
+            "help": "Sends an invitation to a Slack Connect channel",
+            "link": "https://api.slack.com/methods/conversations.inviteShared"
+        },
+        "conversations.join": {
+            "label": "conversations.join",
+            "value": "conversations.join",
+            "help": "Joins an existing conversation.",
+            "link": "https://api.slack.com/methods/conversations.join"
+        },
+        "conversations.kick": {
+            "label": "conversations.kick",
+            "value": "conversations.kick",
+            "help": "Removes a user from a conversation.",
+            "link": "https://api.slack.com/methods/conversations.kick"
+        },
+        "conversations.leave": {
+            "label": "conversations.leave",
+            "value": "conversations.leave",
+            "help": "Leaves a conversation.",
+            "link": "https://api.slack.com/methods/conversations.leave"
+        },
+        "conversations.list": {
+            "label": "conversations.list",
+            "value": "conversations.list",
+            "help": "Lists all channels in a Slack team.",
+            "link": "https://api.slack.com/methods/conversations.list"
+        },
+        "conversations.listConnectInvites": {
+            "label": "conversations.listConnectInvites",
+            "value": "conversations.listConnectInvites",
+            "help": "Lists shared channel invites that have been generated or received but have not been approved by all parties",
+            "link": "https://api.slack.com/methods/conversations.listConnectInvites"
+        },
+        "conversations.mark": {
+            "label": "conversations.mark",
+            "value": "conversations.mark",
+            "help": "Sets the read cursor in a channel.",
+            "link": "https://api.slack.com/methods/conversations.mark"
+        },
+        "conversations.members": {
+            "label": "conversations.members",
+            "value": "conversations.members",
+            "help": "Retrieve members of a conversation.",
+            "link": "https://api.slack.com/methods/conversations.members"
+        },
+        "conversations.open": {
+            "label": "conversations.open",
+            "value": "conversations.open",
+            "help": "Opens or resumes a direct message or multi-person direct message.",
+            "link": "https://api.slack.com/methods/conversations.open"
+        },
+        "conversations.rename": {
+            "label": "conversations.rename",
+            "value": "conversations.rename",
+            "help": "Renames a conversation.",
+            "link": "https://api.slack.com/methods/conversations.rename"
+        },
+        "conversations.replies": {
+            "label": "conversations.replies",
+            "value": "conversations.replies",
+            "help": "Retrieve a thread of messages posted to a conversation",
+            "link": "https://api.slack.com/methods/conversations.replies"
+        },
+        "conversations.setPurpose": {
+            "label": "conversations.setPurpose",
+            "value": "conversations.setPurpose",
+            "help": "Sets the purpose for a conversation.",
+            "link": "https://api.slack.com/methods/conversations.setPurpose"
+        },
+        "conversations.setTopic": {
+            "label": "conversations.setTopic",
+            "value": "conversations.setTopic",
+            "help": "Sets the topic for a conversation.",
+            "link": "https://api.slack.com/methods/conversations.setTopic"
+        },
+        "conversations.unarchive": {
+            "label": "conversations.unarchive",
+            "value": "conversations.unarchive",
+            "help": "Reverses conversation archival.",
+            "link": "https://api.slack.com/methods/conversations.unarchive"
+        },
+        "dialog.open": {
+            "label": "dialog.open",
+            "value": "dialog.open",
+            "help": "Open a dialog with a user",
+            "link": "https://api.slack.com/methods/dialog.open"
+        },
+        "dnd.endDnd": {
+            "label": "dnd.endDnd",
+            "value": "dnd.endDnd",
+            "help": "Ends the current user's Do Not Disturb session immediately.",
+            "link": "https://api.slack.com/methods/dnd.endDnd"
+        },
+        "dnd.endSnooze": {
+            "label": "dnd.endSnooze",
+            "value": "dnd.endSnooze",
+            "help": "Ends the current user's snooze mode immediately.",
+            "link": "https://api.slack.com/methods/dnd.endSnooze"
+        },
+        "dnd.info": {
+            "label": "dnd.info",
+            "value": "dnd.info",
+            "help": "Retrieves a user's current Do Not Disturb status.",
+            "link": "https://api.slack.com/methods/dnd.info"
+        },
+        "dnd.setSnooze": {
+            "label": "dnd.setSnooze",
+            "value": "dnd.setSnooze",
+            "help": "Turns on Do Not Disturb mode for the current user, or changes its duration.",
+            "link": "https://api.slack.com/methods/dnd.setSnooze"
+        },
+        "dnd.teamInfo": {
+            "label": "dnd.teamInfo",
+            "value": "dnd.teamInfo",
+            "help": "Retrieves the Do Not Disturb status for up to 50 users on a team.",
+            "link": "https://api.slack.com/methods/dnd.teamInfo"
+        },
+        "emoji.list": {
+            "label": "emoji.list",
+            "value": "emoji.list",
+            "help": "Lists custom emoji for a team.",
+            "link": "https://api.slack.com/methods/emoji.list"
+        },
+        "files.comments.delete": {
+            "label": "files.comments.delete",
+            "value": "files.comments.delete",
+            "help": "Deletes an existing comment on a file.",
+            "link": "https://api.slack.com/methods/files.comments.delete"
+        },
+        "files.delete": {
+            "label": "files.delete",
+            "value": "files.delete",
+            "help": "Deletes a file.",
+            "link": "https://api.slack.com/methods/files.delete"
+        },
+        "files.info": {
+            "label": "files.info",
+            "value": "files.info",
+            "help": "Gets information about a file.",
+            "link": "https://api.slack.com/methods/files.info"
+        },
+        "files.list": {
+            "label": "files.list",
+            "value": "files.list",
+            "help": "List for a team, in a channel, or from a user with applied filters.",
+            "link": "https://api.slack.com/methods/files.list"
+        },
+        "files.remote.add": {
+            "label": "files.remote.add",
+            "value": "files.remote.add",
+            "help": "Adds a file from a remote service",
+            "link": "https://api.slack.com/methods/files.remote.add"
+        },
+        "files.remote.info": {
+            "label": "files.remote.info",
+            "value": "files.remote.info",
+            "help": "Retrieve information about a remote file added to Slack",
+            "link": "https://api.slack.com/methods/files.remote.info"
+        },
+        "files.remote.list": {
+            "label": "files.remote.list",
+            "value": "files.remote.list",
+            "help": "Retrieve information about a remote file added to Slack",
+            "link": "https://api.slack.com/methods/files.remote.list"
+        },
+        "files.remote.remove": {
+            "label": "files.remote.remove",
+            "value": "files.remote.remove",
+            "help": "Remove a remote file.",
+            "link": "https://api.slack.com/methods/files.remote.remove"
+        },
+        "files.remote.share": {
+            "label": "files.remote.share",
+            "value": "files.remote.share",
+            "help": "Share a remote file into a channel.",
+            "link": "https://api.slack.com/methods/files.remote.share"
+        },
+        "files.remote.update": {
+            "label": "files.remote.update",
+            "value": "files.remote.update",
+            "help": "Updates an existing remote file.",
+            "link": "https://api.slack.com/methods/files.remote.update"
+        },
+        "files.revokePublicURL": {
+            "label": "files.revokePublicURL",
+            "value": "files.revokePublicURL",
+            "help": "Revokes public/external sharing access for a file",
+            "link": "https://api.slack.com/methods/files.revokePublicURL"
+        },
+        "files.sharedPublicURL": {
+            "label": "files.sharedPublicURL",
+            "value": "files.sharedPublicURL",
+            "help": "Enables a file for public/external sharing.",
+            "link": "https://api.slack.com/methods/files.sharedPublicURL"
+        },
+        "files.upload": {
+            "label": "files.upload",
+            "value": "files.upload",
+            "help": "Uploads or creates a file.",
+            "link": "https://api.slack.com/methods/files.upload"
+        },
+        "groups.create": {
+            "label": "groups.create",
+            "value": "groups.create",
+            "help": "[DEPRECATED] Creates a private channel.",
+            "link": "https://api.slack.com/methods/groups.create"
+        },
+        "groups.info": {
+            "label": "groups.info",
+            "value": "groups.info",
+            "help": "[DEPRECATED] Gets information about a private channel.",
+            "link": "https://api.slack.com/methods/groups.info"
+        },
+        "groups.invite": {
+            "label": "groups.invite",
+            "value": "groups.invite",
+            "help": "[DEPRECATED] Invites a user to a private channel.",
+            "link": "https://api.slack.com/methods/groups.invite"
+        },
+        "groups.mark": {
+            "label": "groups.mark",
+            "value": "groups.mark",
+            "help": "[DEPRECATED] Sets the read cursor in a private channel.",
+            "link": "https://api.slack.com/methods/groups.mark"
+        },
+        "groups.open": {
+            "label": "groups.open",
+            "value": "groups.open",
+            "help": "[DEPRECATED] Opens a private channel.",
+            "link": "https://api.slack.com/methods/groups.open"
+        },
+        "im.list": {
+            "label": "im.list",
+            "value": "im.list",
+            "help": "[DEPRECATED] Lists direct message channels for the calling user.",
+            "link": "https://api.slack.com/methods/im.list"
+        },
+        "im.mark": {
+            "label": "im.mark",
+            "value": "im.mark",
+            "help": "[DEPRECATED] Sets the read cursor in a direct message channel.",
+            "link": "https://api.slack.com/methods/im.mark"
+        },
+        "im.open": {
+            "label": "im.open",
+            "value": "im.open",
+            "help": "[DEPRECATED] Opens a direct message channel.",
+            "link": "https://api.slack.com/methods/im.open"
+        },
+        "migration.exchange": {
+            "label": "migration.exchange",
+            "value": "migration.exchange",
+            "help": "For Enterprise Grid workspaces, map local user IDs to global user IDs",
+            "link": "https://api.slack.com/methods/migration.exchange"
+        },
+        "mpim.list": {
+            "label": "mpim.list",
+            "value": "mpim.list",
+            "help": "[DEPRECATED] Lists multiparty direct message channels for the calling user.",
+            "link": "https://api.slack.com/methods/mpim.list"
+        },
+        "mpim.mark": {
+            "label": "mpim.mark",
+            "value": "mpim.mark",
+            "help": "[DEPRECATED] Sets the read cursor in a multiparty direct message channel.",
+            "link": "https://api.slack.com/methods/mpim.mark"
+        },
+        "mpim.open": {
+            "label": "mpim.open",
+            "value": "mpim.open",
+            "help": "[DEPRECATED] This method opens a multiparty direct message.",
+            "link": "https://api.slack.com/methods/mpim.open"
+        },
+        "oauth.access": {
+            "label": "oauth.access",
+            "value": "oauth.access",
+            "help": "Exchanges a temporary OAuth verifier code for an access token.",
+            "link": "https://api.slack.com/methods/oauth.access"
+        },
+        "oauth.v2.access": {
+            "label": "oauth.v2.access",
+            "value": "oauth.v2.access",
+            "help": "Exchanges a temporary OAuth verifier code for an access token.",
+            "link": "https://api.slack.com/methods/oauth.v2.access"
+        },
+        "oauth.v2.exchange": {
+            "label": "oauth.v2.exchange",
+            "value": "oauth.v2.exchange",
+            "help": "Exchanges a legacy access token for a new expiring access token and refresh token",
+            "link": "https://api.slack.com/methods/oauth.v2.exchange"
+        },
+        "openid.connect.token": {
+            "label": "openid.connect.token",
+            "value": "openid.connect.token",
+            "help": "Exchanges a temporary OAuth verifier code for an access token for Sign in with Slack.",
+            "link": "https://api.slack.com/methods/openid.connect.token"
+        },
+        "openid.connect.userInfo": {
+            "label": "openid.connect.userInfo",
+            "value": "openid.connect.userInfo",
+            "help": "Get the identity of a user who has authorized Sign in with Slack.",
+            "link": "https://api.slack.com/methods/openid.connect.userInfo"
+        },
+        "pins.add": {
+            "label": "pins.add",
+            "value": "pins.add",
+            "help": "Pins an item to a channel.",
+            "link": "https://api.slack.com/methods/pins.add"
+        },
+        "pins.list": {
+            "label": "pins.list",
+            "value": "pins.list",
+            "help": "Lists items pinned to a channel.",
+            "link": "https://api.slack.com/methods/pins.list"
+        },
+        "pins.remove": {
+            "label": "pins.remove",
+            "value": "pins.remove",
+            "help": "Un-pins an item from a channel.",
+            "link": "https://api.slack.com/methods/pins.remove"
+        },
+        "reactions.add": {
+            "label": "reactions.add",
+            "value": "reactions.add",
+            "help": "Adds a reaction to an item.",
+            "link": "https://api.slack.com/methods/reactions.add"
+        },
+        "reactions.get": {
+            "label": "reactions.get",
+            "value": "reactions.get",
+            "help": "Gets reactions for an item.",
+            "link": "https://api.slack.com/methods/reactions.get"
+        },
+        "reactions.list": {
+            "label": "reactions.list",
+            "value": "reactions.list",
+            "help": "Lists reactions made by a user.",
+            "link": "https://api.slack.com/methods/reactions.list"
+        },
+        "reactions.remove": {
+            "label": "reactions.remove",
+            "value": "reactions.remove",
+            "help": "Removes a reaction from an item.",
+            "link": "https://api.slack.com/methods/reactions.remove"
+        },
+        "reminders.add": {
+            "label": "reminders.add",
+            "value": "reminders.add",
+            "help": "Creates a reminder.",
+            "link": "https://api.slack.com/methods/reminders.add"
+        },
+        "reminders.complete": {
+            "label": "reminders.complete",
+            "value": "reminders.complete",
+            "help": "Marks a reminder as complete.",
+            "link": "https://api.slack.com/methods/reminders.complete"
+        },
+        "reminders.delete": {
+            "label": "reminders.delete",
+            "value": "reminders.delete",
+            "help": "Deletes a reminder.",
+            "link": "https://api.slack.com/methods/reminders.delete"
+        },
+        "reminders.info": {
+            "label": "reminders.info",
+            "value": "reminders.info",
+            "help": "Gets information about a reminder.",
+            "link": "https://api.slack.com/methods/reminders.info"
+        },
+        "reminders.list": {
+            "label": "reminders.list",
+            "value": "reminders.list",
+            "help": "Lists all reminders created by or for a given user.",
+            "link": "https://api.slack.com/methods/reminders.list"
+        },
+        "rtm.connect": {
+            "label": "rtm.connect",
+            "value": "rtm.connect",
+            "help": "Starts a Real Time Messaging session.",
+            "link": "https://api.slack.com/methods/rtm.connect"
+        },
+        "rtm.start": {
+            "label": "rtm.start",
+            "value": "rtm.start",
+            "help": "Deprecated: Starts a Real Time Messaging session. Use rtm.connect instead.",
+            "link": "https://api.slack.com/methods/rtm.start"
+        },
+        "search.all": {
+            "label": "search.all",
+            "value": "search.all",
+            "help": "Searches for messages and files matching a query.",
+            "link": "https://api.slack.com/methods/search.all"
+        },
+        "search.files": {
+            "label": "search.files",
+            "value": "search.files",
+            "help": "Searches for files matching a query.",
+            "link": "https://api.slack.com/methods/search.files"
+        },
+        "search.messages": {
+            "label": "search.messages",
+            "value": "search.messages",
+            "help": "Searches for messages matching a query.",
+            "link": "https://api.slack.com/methods/search.messages"
+        },
+        "stars.add": {
+            "label": "stars.add",
+            "value": "stars.add",
+            "help": "Save an item for later. Formerly known as _adding a star_.",
+            "link": "https://api.slack.com/methods/stars.add"
+        },
+        "stars.list": {
+            "label": "stars.list",
+            "value": "stars.list",
+            "help": "List a user's saved items, formerly known as _stars_.",
+            "link": "https://api.slack.com/methods/stars.list"
+        },
+        "stars.remove": {
+            "label": "stars.remove",
+            "value": "stars.remove",
+            "help": "Removes a saved item (star) from an item.",
+            "link": "https://api.slack.com/methods/stars.remove"
+        },
+        "team.accessLogs": {
+            "label": "team.accessLogs",
+            "value": "team.accessLogs",
+            "help": "Gets the access logs for the current team.",
+            "link": "https://api.slack.com/methods/team.accessLogs"
+        },
+        "team.billableInfo": {
+            "label": "team.billableInfo",
+            "value": "team.billableInfo",
+            "help": "Gets billable users information for the current team.",
+            "link": "https://api.slack.com/methods/team.billableInfo"
+        },
+        "team.billing.info": {
+            "label": "team.billing.info",
+            "value": "team.billing.info",
+            "help": "Reads a workspace's billing plan information.",
+            "link": "https://api.slack.com/methods/team.billing.info"
+        },
+        "team.info": {
+            "label": "team.info",
+            "value": "team.info",
+            "help": "Gets information about the current team.",
+            "link": "https://api.slack.com/methods/team.info"
+        },
+        "team.integrationLogs": {
+            "label": "team.integrationLogs",
+            "value": "team.integrationLogs",
+            "help": "Gets the integration logs for the current team.",
+            "link": "https://api.slack.com/methods/team.integrationLogs"
+        },
+        "team.preferences.list": {
+            "label": "team.preferences.list",
+            "value": "team.preferences.list",
+            "help": "Retrieve a list of a workspace's team preferences.",
+            "link": "https://api.slack.com/methods/team.preferences.list"
+        },
+        "team.profile.get": {
+            "label": "team.profile.get",
+            "value": "team.profile.get",
+            "help": "Retrieve a team's profile.",
+            "link": "https://api.slack.com/methods/team.profile.get"
+        },
+        "tooling.tokens.rotate": {
+            "label": "tooling.tokens.rotate",
+            "value": "tooling.tokens.rotate",
+            "help": "Exchanges a refresh token for a new app configuration token.",
+            "link": "https://api.slack.com/methods/tooling.tokens.rotate"
+        },
+        "usergroups.create": {
+            "label": "usergroups.create",
+            "value": "usergroups.create",
+            "help": "Create a User Group",
+            "link": "https://api.slack.com/methods/usergroups.create"
+        },
+        "usergroups.disable": {
+            "label": "usergroups.disable",
+            "value": "usergroups.disable",
+            "help": "Disable an existing User Group",
+            "link": "https://api.slack.com/methods/usergroups.disable"
+        },
+        "usergroups.enable": {
+            "label": "usergroups.enable",
+            "value": "usergroups.enable",
+            "help": "Enable a User Group",
+            "link": "https://api.slack.com/methods/usergroups.enable"
+        },
+        "usergroups.list": {
+            "label": "usergroups.list",
+            "value": "usergroups.list",
+            "help": "List all User Groups for a team",
+            "link": "https://api.slack.com/methods/usergroups.list"
+        },
+        "usergroups.update": {
+            "label": "usergroups.update",
+            "value": "usergroups.update",
+            "help": "Update an existing User Group",
+            "link": "https://api.slack.com/methods/usergroups.update"
+        },
+        "usergroups.users.list": {
+            "label": "usergroups.users.list",
+            "value": "usergroups.users.list",
+            "help": "List all users in a User Group",
+            "link": "https://api.slack.com/methods/usergroups.users.list"
+        },
+        "usergroups.users.update": {
+            "label": "usergroups.users.update",
+            "value": "usergroups.users.update",
+            "help": "Update the list of users for a User Group",
+            "link": "https://api.slack.com/methods/usergroups.users.update"
+        },
+        "users.conversations": {
+            "label": "users.conversations",
+            "value": "users.conversations",
+            "help": "List conversations the calling user may access.",
+            "link": "https://api.slack.com/methods/users.conversations"
+        },
+        "users.deletePhoto": {
+            "label": "users.deletePhoto",
+            "value": "users.deletePhoto",
+            "help": "Delete the user profile photo",
+            "link": "https://api.slack.com/methods/users.deletePhoto"
+        },
+        "users.getPresence": {
+            "label": "users.getPresence",
+            "value": "users.getPresence",
+            "help": "Gets user presence information.",
+            "link": "https://api.slack.com/methods/users.getPresence"
+        },
+        "users.identity": {
+            "label": "users.identity",
+            "value": "users.identity",
+            "help": "Get a user's identity.",
+            "link": "https://api.slack.com/methods/users.identity"
+        },
+        "users.info": {
+            "label": "users.info",
+            "value": "users.info",
+            "help": "Gets information about a user.",
+            "link": "https://api.slack.com/methods/users.info"
+        },
+        "users.list": {
+            "label": "users.list",
+            "value": "users.list",
+            "help": "Lists all users in a Slack team.",
+            "link": "https://api.slack.com/methods/users.list"
+        },
+        "users.lookupByEmail": {
+            "label": "users.lookupByEmail",
+            "value": "users.lookupByEmail",
+            "help": "Find a user with an email address.",
+            "link": "https://api.slack.com/methods/users.lookupByEmail"
+        },
+        "users.profile.get": {
+            "label": "users.profile.get",
+            "value": "users.profile.get",
+            "help": "Retrieve a user's profile information, including their custom status.",
+            "link": "https://api.slack.com/methods/users.profile.get"
+        },
+        "users.profile.set": {
+            "label": "users.profile.set",
+            "value": "users.profile.set",
+            "help": "Set a user's profile information, including custom status.",
+            "link": "https://api.slack.com/methods/users.profile.set"
+        },
+        "users.setActive": {
+            "label": "users.setActive",
+            "value": "users.setActive",
+            "help": "Marked a user as active. Deprecated and non-functional.",
+            "link": "https://api.slack.com/methods/users.setActive"
+        },
+        "users.setPhoto": {
+            "label": "users.setPhoto",
+            "value": "users.setPhoto",
+            "help": "Set the user profile photo",
+            "link": "https://api.slack.com/methods/users.setPhoto"
+        },
+        "users.setPresence": {
+            "label": "users.setPresence",
+            "value": "users.setPresence",
+            "help": "Manually sets user presence.",
+            "link": "https://api.slack.com/methods/users.setPresence"
+        },
+        "views.open": {
+            "label": "views.open",
+            "value": "views.open",
+            "help": "Open a view for a user.",
+            "link": "https://api.slack.com/methods/views.open"
+        },
+        "views.publish": {
+            "label": "views.publish",
+            "value": "views.publish",
+            "help": "Publish a static view for a User.",
+            "link": "https://api.slack.com/methods/views.publish"
+        },
+        "views.push": {
+            "label": "views.push",
+            "value": "views.push",
+            "help": "Push a view onto the stack of a root view.",
+            "link": "https://api.slack.com/methods/views.push"
+        },
+        "views.update": {
+            "label": "views.update",
+            "value": "views.update",
+            "help": "Update an existing view.",
+            "link": "https://api.slack.com/methods/views.update"
+        },
+        "workflows.stepCompleted": {
+            "label": "workflows.stepCompleted",
+            "value": "workflows.stepCompleted",
+            "help": "Indicate that an app's step in a workflow completed execution.",
+            "link": "https://api.slack.com/methods/workflows.stepCompleted"
+        },
+        "workflows.stepFailed": {
+            "label": "workflows.stepFailed",
+            "value": "workflows.stepFailed",
+            "help": "Indicate that an app's step in a workflow failed to execute.",
+            "link": "https://api.slack.com/methods/workflows.stepFailed"
+        },
+        "workflows.updateStep": {
+            "label": "workflows.updateStep",
+            "value": "workflows.updateStep",
+            "help": "Update the configuration for a workflow step.",
+            "link": "https://api.slack.com/methods/workflows.updateStep"
+        }
+    };
+    RED.nodes.registerType('slack-webclient', {
+        category: 'messaging',
+        color: '#d8bfd8',
+        defaults: {
+            name: {
+                value: ''
+            },
+            webClientConfig: {
+                required: true,
+                type: 'slack-webclient-config'
+            },
+            methodName: {
+                value: 'chat.postMessage',
+                required: true
+            }
+        },
+        inputs: 1,
+        outputs: 2,
+        icon: 'Slack_Mark_Monochrome_White.svg',
+        paletteLabel: 'slack webclient',
+        label: function () {
+            return this.name || this.methodName || 'slack webclient';
+        },
+        labelStyle: function () {
+            return this.name ? 'node_label_italic' : '';
+        },
+        outputLabels: function (index) {
+            return ['ok', 'error'][index];
+        },
+        oneditprepare: function () {
+            $("#node-input-methodName").typedInput({
+                types: [{
+                    options: Object.values(slackMethods)
+                }]
+            }).on('change', function (event, type, value) {
+                const slackMethod = slackMethods[value];
+                $('#help').text(slackMethod.help);
+                $('#link').attr('href', slackMethod.link);
+            });
+        }
+    });
+
+    RED.nodes.registerType('slack-channel-lookup', {
+        category: 'messaging',
+        color: '#d8bfd8',
+        defaults: {
+            name: {
+                value: ''
+            },
+            webClientConfig: {
+                required: true,
+                type: 'slack-webclient-config'
+            },
+            channel: {
+                required: true
+            },
+            channelType: {
+                value: 'str',
+                required: true
+            },
+            output: {
+                value: 'payload',
+                required: true
+            },
+            outputType: {
+                value: 'msg',
+                required: true
+            }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'hash.svg',
+        paletteLabel: 'slack channel lookup',
+        label: function () {
+            let label;
+            if (this.channelType) {
+                if (this.channelType === 'str') {
+                    label = this.channel;
+                } else if (this.channelType !== 'jsonata') {
+                    label = this.channelType + '.' + this.channel;
+                }
+            }
+
+            return this.name || label || 'slack channel lookup';
+        },
+        labelStyle: function () {
+            return this.name ? 'node_label_italic' : '';
+        },
+        oneditprepare: function () {
+            $('#node-input-channel').typedInput({
+                types: ['str', 'msg', 'flow', 'global', 'env', 'jsonata'],
+                typeField: '#node-input-channelType'
+            });
+            $('#node-input-output').typedInput({
+                types: ['msg', 'node', 'flow', 'global'],
+                typeField: '#node-input-outputType'
+            });
+        }
+    });
+
+    RED.nodes.registerType('slack-escape-text', {
+        category: 'messaging',
+        color: '#d8bfd8',
+        defaults: {
+            name: {
+                value: ''
+            },
+            text: {
+                value: 'payload',
+                required: true
+            },
+            textType: {
+                value: 'msg',
+                required: true
+            },
+            output: {
+                value: 'payload',
+                required: true
+            },
+            outputType: {
+                value: 'msg',
+                required: true
+            }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'arrow-in.svg',
+        paletteLabel: 'slack escape text',
+        label: function () {
+            let label;
+            if (this.textType) {
+                if (this.textType !== 'str' && this.textType !== 'jsonata') {
+                    label = this.textType + '.' + this.text;
+                }
+            }
+
+            return this.name || label || 'slack escape text';
+        },
+        labelStyle: function () {
+            return this.name ? 'node_label_italic' : '';
+        },
+        oneditprepare: function () {
+            $('#node-input-text').typedInput({
+                types: ['str', 'msg', 'flow', 'global', 'env', 'jsonata'],
+                typeField: '#node-input-textType'
+            });
+            $('#node-input-output').typedInput({
+                types: ['msg', 'node', 'flow', 'global'],
+                typeField: '#node-input-outputType'
+            });
+        }
+    });
+</script>
