@@ -7,7 +7,6 @@
        <label for="node-config-input-token"><i class="fa fa-key"></i> OAuth Token</label>
        <input type="password" id="node-config-input-token">
    </div>
-
 </script>
 
 <script type="text/x-red" data-template-name="slack-webclient">
@@ -26,7 +25,6 @@
     <div class="form-row">
         <div style="margin-left: 100px;"><span id="help"></span> <a id="link" href="" target="api.slack.com">Learn more</a>.</div>
     </div>
-
 </script>
 
 <script type="text/x-red" data-help-name="slack-webclient"></script>
@@ -50,7 +48,6 @@
         <input type="text" id="node-input-output">
         <input type="hidden" id="node-input-outputType">
     </div>
-
 </script>
 
 <script type="text/x-red" data-help-name="slack-channel-lookup"></script>
@@ -70,30 +67,12 @@
         <input type="text" id="node-input-output">
         <input type="hidden" id="node-input-outputType">
     </div>
-
 </script>
 
 <script type="text/x-red" data-help-name="slack-escape-text"></script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('slack-webclient-config', {
-        category: 'config',
-        defaults: {
-            name: {
-                value: ''
-            }
-        },
-        credentials: {
-            token: {
-                type: 'text'
-            }
-        },
-        paletteLabel: 'slack webclient config',
-        label: function () {
-            return this.name || 'slack webclient config';
-        }
-    });
-
+    const nodeContextType = {value: 'nodeContext', label: 'node.'};
     const slackMethods = {
         "admin.analytics.getFile": {
             "label": "admin.analytics.getFile",
@@ -1458,6 +1437,25 @@
             "link": "https://api.slack.com/methods/workflows.updateStep"
         }
     };
+
+    RED.nodes.registerType('slack-webclient-config', {
+        category: 'config',
+        defaults: {
+            name: {
+                value: ''
+            }
+        },
+        credentials: {
+            token: {
+                type: 'text'
+            }
+        },
+        paletteLabel: 'slack webclient config',
+        label: function () {
+            return this.name || 'slack webclient config';
+        }
+    });
+
     RED.nodes.registerType('slack-webclient', {
         category: 'messaging',
         color: '#d8bfd8',
@@ -1548,11 +1546,11 @@
         },
         oneditprepare: function () {
             $('#node-input-channel').typedInput({
-                types: ['str', 'msg', 'flow', 'global', 'env', 'jsonata'],
+                types: ['str', 'msg', nodeContextType, 'flow', 'global', 'env', 'jsonata'],
                 typeField: '#node-input-channelType'
             });
             $('#node-input-output').typedInput({
-                types: ['msg', 'node', 'flow', 'global'],
+                types: ['msg', nodeContextType, 'flow', 'global'],
                 typeField: '#node-input-outputType'
             });
         }
@@ -1601,11 +1599,11 @@
         },
         oneditprepare: function () {
             $('#node-input-text').typedInput({
-                types: ['str', 'msg', 'flow', 'global', 'env', 'jsonata'],
+                types: ['str', 'msg', nodeContextType, 'flow', 'global', 'env', 'jsonata'],
                 typeField: '#node-input-textType'
             });
             $('#node-input-output').typedInput({
-                types: ['msg', 'node', 'flow', 'global'],
+                types: ['msg', nodeContextType, 'flow', 'global'],
                 typeField: '#node-input-outputType'
             });
         }

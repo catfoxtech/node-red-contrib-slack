@@ -74,6 +74,7 @@ module.exports = function (RED) {
         });
     }
 
+    // TODO add option to disable automatic MPIM creation?
     function ChannelLookupNode(config) {
         RED.nodes.createNode(this, config);
         const node = this;
@@ -153,7 +154,7 @@ module.exports = function (RED) {
             if (groupOfUserIds(namesOrIds)) {
                 const group = await node.webClient.conversations.open({users: namesOrIds.join(',')});
                 if (group.ok) {
-                    namesOrIds = group.channel.id;
+                    return group.channel.id;
                 }
             }
 
@@ -161,7 +162,12 @@ module.exports = function (RED) {
         }
 
         this.on('input', async function (msg, _send, done) {
-            let channel = RED.util.evaluateNodeProperty(node.channel, node.channelType, node, msg);
+            let channel;
+            if (node.channelType === 'nodeContext') {
+                channel = node.context().get(node.channel);
+            } else {
+                channel = RED.util.evaluateNodeProperty(node.channel, node.channelType, node, msg);
+            }
 
             if (channel) {
                 // https://api.slack.com/methods/chat.postMessage#channels
@@ -171,7 +177,7 @@ module.exports = function (RED) {
 
                 if (node.outputType === 'msg') {
                     RED.util.setMessageProperty(msg, node.output, channel, true);
-                } else if (node.outputType === 'node') {
+                } else if (node.outputType === 'nodeContext') {
                     node.context().set(node.output, channel);
                 } else if (node.outputType === 'flow') {
                     node.context().flow.set(node.output, channel);
@@ -200,7 +206,12 @@ module.exports = function (RED) {
         this.outputType = config.outputType;
 
         this.on('input', async function (msg, _send, done) {
-            let text = RED.util.evaluateNodeProperty(node.text, node.textType, node, msg);
+            let text;
+            if (node.textType === 'nodeContext') {
+                text = node.context().get(node.text);
+            } else {
+                text = RED.util.evaluateNodeProperty(node.text, node.textType, node, msg);
+            }
 
             if (text) {
                 // https://api.slack.com/reference/surfaces/formatting#escaping
@@ -219,7 +230,7 @@ module.exports = function (RED) {
 
                 if (node.outputType === 'msg') {
                     RED.util.setMessageProperty(msg, node.output, text, true);
-                } else if (node.outputType === 'node') {
+                } else if (node.outputType === 'nodeContext') {
                     node.context().set(node.output, text);
                 } else if (node.outputType === 'flow') {
                     node.context().flow.set(node.output, text);
