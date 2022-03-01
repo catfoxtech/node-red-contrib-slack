@@ -252,7 +252,7 @@ module.exports = function (RED) {
     RED.nodes.registerType('slack-webclient-config', WebClientConfig, {
         credentials: {
             token: {
-                type: 'text'
+                type: 'password'
             }
         }
     });
