@@ -44,6 +44,13 @@
         <input type="hidden" id="node-input-channelType">
     </div>
     <div class="form-row">
+        <label for="node-input-groupConversations"><!-- <i class="fa fa-users"></i> Group conversations --></label>
+        <label for="node-input-groupConversations" style="width: auto;">
+        <input type="checkbox" id="node-input-groupConversations" style="display: inline-block; width: auto; vertical-align: top;">
+        Group conversations
+        </label>
+    </div>
+    <div class="form-row">
         <label for="node-input-output"><i class="fa fa-long-arrow-right"></i> Output</label>
         <input type="text" id="node-input-output">
         <input type="hidden" id="node-input-outputType">
@@ -1522,6 +1529,10 @@
             },
             outputType: {
                 value: 'msg',
+                required: true
+            },
+            groupConversations: {
+                value: true,
                 required: true
             }
         },

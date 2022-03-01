@@ -74,7 +74,6 @@ module.exports = function (RED) {
         });
     }
 
-    // TODO add option to disable automatic MPIM creation?
     function ChannelLookupNode(config) {
         RED.nodes.createNode(this, config);
         const node = this;
@@ -86,6 +85,7 @@ module.exports = function (RED) {
         this.channelType = config.channelType;
         this.output = config.output;
         this.outputType = config.outputType;
+        this.groupConversations = config.groupConversations;
 
         function conversationsByName() {
             return node.webClient.paginate('conversations.list', {types: 'public_channel,private_channel'}, function (page) {
@@ -151,7 +151,7 @@ module.exports = function (RED) {
                 }
             }).filter(Boolean);
 
-            if (groupOfUserIds(namesOrIds)) {
+            if (node.groupConversations && groupOfUserIds(namesOrIds)) {
                 const group = await node.webClient.conversations.open({users: namesOrIds.join(',')});
                 if (group.ok) {
                     return group.channel.id;
