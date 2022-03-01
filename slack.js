@@ -215,7 +215,7 @@ module.exports = function (RED) {
 
             if (text) {
                 // https://api.slack.com/reference/surfaces/formatting#escaping
-                text = text.replace(/[&<>]/, function (match) {
+                text = text.replace(/[&<>]/gm, function (match) {
                     switch (match) {
                         case '&':
                             return '&amp;';
