@@ -34,7 +34,6 @@ module.exports = function (RED) {
         });
     }
 
-    // TODO pagination (https://slack.dev/node-slack-sdk/web-api#pagination)
     function WebClientNode(config) {
         RED.nodes.createNode(this, config);
         const node = this;
@@ -43,20 +42,77 @@ module.exports = function (RED) {
         this.webClient = webClientConfig.webClient;
 
         this.methodName = config.methodName;
+        this.paginate = config.paginate;
+        if (config.pageLimit) {
+            this.pageLimit = parseInt(config.pageLimit);
+        }
+        if (config.shouldStopExpression) {
+            this.shouldStopExpression = RED.util.prepareJSONataExpression(config.shouldStopExpression, this);
+        }
 
         this.on('input', async function (msg, _send, done) {
             const methodName = node.methodName;
-            const options = msg.payload;
+            const options = msg.payload || {};
 
             try {
-                msg.payload = await node.webClient.apiCall(methodName, options);
+                let ok = true;
+                let msgs;
 
-                if (msg.payload.ok) {
-                    node.status({fill: 'green', shape: 'dot', text: 'ok'});
-                    _send([msg, null]);
+                if (node.paginate) {
+                    // https://api.slack.com/docs/pagination
+                    // https://slack.dev/node-slack-sdk/web-api#pagination
+                    // TODO add support for classic pagination (https://api.slack.com/docs/pagination#classic)
+                    options.limit = options.limit || node.pageLimit;
+
+                    msgs = await node.webClient.paginate(methodName, options, function (page) {
+                        if (node.shouldStopExpression) {
+                            return RED.util.evaluateJSONataExpression(node.shouldStopExpression, page);
+                        } else {
+                            return false;
+                        }
+                    }, function (msgs, page/*, index*/) {
+                        if (msgs === undefined) {
+                            msgs = [];
+                        }
+
+                        msgs.push({
+                            payload: page
+                        });
+
+                        return msgs;
+                    });
+
+                    const partsId = RED.util.generateId();
+                    msgs = msgs.map(function (msg, index, msgs) {
+                        ok = ok && msg.payload.ok;
+
+                        const count = msgs.length;
+                        msg.parts = {
+                            id: partsId,
+                            index,
+                            count,
+                            type: 'array'
+                        };
+
+                        if (index === count - 1) {
+                            msg.complete = true;
+                        }
+
+                        return msg;
+                    });
                 } else {
-                    node.status({fill: 'yellow', shape: 'dot', text: msg.payload.error});
-                    _send([null, msg]);
+                    msg.payload = await node.webClient.apiCall(methodName, options);
+
+                    ok = msg.payload.ok;
+                    msgs = [msg];
+                }
+
+                if (ok) {
+                    node.status({fill: 'green', shape: 'dot', text: 'ok'});
+                    _send([msgs, null]);
+                } else {
+                    node.status({fill: 'yellow', shape: 'dot', text: (msg.payload ? msg.payload.error : '(see logs)')});
+                    _send([null, msgs]);
                 }
 
                 if (done) {
