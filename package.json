@@ -1,20 +1,19 @@
 {
-  "name": "node-red-contrib-slack",
+  "name": "@catfoxtech/node-red-contrib-slack",
   "version": "0.0.0",
-  "description": "",
   "main": "slack.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "devDependencies": {
-    "node-red": "^2.2.2"
-  },
-  "dependencies": {
-    "@slack/web-api": "^6.7.0"
-  },
+  "keywords": [
+    "node-red"
+  ],
   "node-red": {
     "nodes": {
       "slack": "slack.js"
     }
+  },
+  "dependencies": {
+    "@slack/web-api": "^6.7.1"
+  },
+  "devDependencies": {
+    "node-red": "^2.2.2"
   }
 }
