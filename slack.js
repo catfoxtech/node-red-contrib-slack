@@ -313,6 +313,6 @@ module.exports = function (RED) {
         }
     });
     RED.nodes.registerType('slack-webclient', WebClientNode);
-    RED.nodes.registerType('slack-channel-lookup', ChannelLookupNode);
-    RED.nodes.registerType('slack-escape-text', EscapeTextNode);
+    RED.nodes.registerType('slack-webclient-channel-lookup', ChannelLookupNode);
+    RED.nodes.registerType('slack-webclient-escape-text', EscapeTextNode);
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@catfoxtech/node-red-contrib-slack",
+  "name": "@catfoxtech/node-red-contrib-slack-webclient",
   "version": "0.0.0",
   "main": "slack.js",
   "keywords": [
